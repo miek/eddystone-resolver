@@ -27,5 +27,5 @@ def gen_eid(ik, k, counter):
         get_byte(counter, 2),
         get_byte(counter, 3),
     ])
-    eid = AES.new(tk, AES.MODE_ECB).encrypt(eid_data)
+    eid = AES.new(tk, AES.MODE_ECB).encrypt(eid_data)[0:8]
     return eid
