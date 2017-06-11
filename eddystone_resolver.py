@@ -1,4 +1,4 @@
-from flask import Flask, _app_ctx_stack
+from flask import Flask, request, _app_ctx_stack
 from sqlite3 import dbapi2 as sqlite3
 
 DATABASE = '/tmp/beacons.db'
@@ -43,8 +43,28 @@ def initdb_command():
     init_db()
     print('Initialized the database.')
 
-@app.route('/beacon/<eid>')
-def get_beacon(eid):
+@app.route('/beacon/')
+def list_beacons():
+    rv = query_db('select name from beacon')
+    return '<ul>' + ''.join(['<li>' + row['name'] + '</li>' for row in rv]) + '</ul>'
+
+@app.route('/beacon/<name>', methods=['POST'])
+def register_beacon(name):
+    db = get_db()
+    # TODO: get & verify parameters from request
+    # TODO: generate IK from ECDH keys
+    # TODO: pass IK & params to _crypto and check first EID is correct
+    db.execute('insert into beacon (name, identity_key, clock_offset, k) values (?, ?, ?, ?)',
+               [name, 'abcd', 1234, 11])
+    db.commit()
+    return 'Registered beacon ' + name
+
+@app.route('/eid/<eid>')
+def resolve_eid(eid):
+    rv = query_db(
+            'select name from beacon join eid on id = beacon_id where eid = ?',
+            [eid], True
+    )
     return 'Hey ' + eid
 
 if __name__ == '__main__':
