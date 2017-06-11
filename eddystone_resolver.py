@@ -16,6 +16,19 @@ def get_db():
         top.sqlite_db.row_factory = sqlite3.Row
     return top.sqlite_db
 
+@app.teardown_appcontext
+def close_database(exception):
+    """Closes the database again at the end of the request."""
+    top = _app_ctx_stack.top
+    if hasattr(top, 'sqlite_db'):
+        top.sqlite_db.close()
+
+def query_db(query, args=(), one=False):
+    """Queries the database and returns a list of dictionaries."""
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    return (rv[0] if rv else None) if one else rv
+
 def init_db():
     """Initializes the database."""
     db = get_db()
