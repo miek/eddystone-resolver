@@ -1,6 +1,6 @@
 import binascii
 import unittest
-from eddystone_crypto import gen_eid
+from eddystone_crypto import compute_eid
 
 class TestEddystoneCrypto(unittest.TestCase):
     def test_eid(self):
@@ -15,6 +15,6 @@ class TestEddystoneCrypto(unittest.TestCase):
         ]
         for test in tests:
             self.assertEqual(
-                gen_eid(binascii.unhexlify(test[0]), test[1], test[2]),
+                compute_eid(binascii.unhexlify(test[0]), test[1], test[2]),
                 binascii.unhexlify(test[3])
             )

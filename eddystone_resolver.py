@@ -1,7 +1,10 @@
+import binascii
 from flask import Flask, request, _app_ctx_stack
 from sqlite3 import dbapi2 as sqlite3
 
 DATABASE = '/tmp/beacons.db'
+PRIVKEY = binascii.unhexlify('10223344556677889900aabbccddeeff11223344556677889900aabbccddee7e')
+PUBKEY = binascii.unhexlify('10223344556677889900aabbccddeeff11223344556677889900aabbccddee7f')
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -51,8 +54,15 @@ def list_beacons():
 @app.route('/beacon/<name>', methods=['POST'])
 def register_beacon(name):
     db = get_db()
-    # TODO: get & verify parameters from request
-    # TODO: generate IK from ECDH keys
+
+    beacon_pub = binascii.unhexlify(request.form.get('beacon_pub'))
+    k = request.form.get('k')
+    counter = request.form.get('counter')
+    eid = binascii.unhexlify(request.form.get('eid'))
+
+    sec = eddystone_crypto.compute_shared_secret(beacon_pub, app.config['PRIVKEY'])
+    ik = eddystone_crypto.compute_ik(sec, app.config['PUBKEY'], beacon_pub)
+    # TODO: verify parameters from request
     # TODO: pass IK & params to _crypto and check first EID is correct
     db.execute('insert into beacon (name, identity_key, clock_offset, k) values (?, ?, ?, ?)',
                [name, 'abcd', 1234, 11])

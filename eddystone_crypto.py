@@ -30,7 +30,7 @@ def compute_tk(ik, counter):
 def compute_eid(ik, k, counter):
     # Clear lower K bits
     counter = (counter >> k) << k
-    tk = gen_tk(ik, counter)
+    tk = compute_tk(ik, counter)
     eid_data = bytes([
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         k,
