@@ -1,10 +1,11 @@
 import binascii
+import eddystone_crypto
 from flask import Flask, request, _app_ctx_stack
 from sqlite3 import dbapi2 as sqlite3
 
 DATABASE = '/tmp/beacons.db'
-PRIVKEY = binascii.unhexlify('10223344556677889900aabbccddeeff11223344556677889900aabbccddee7e')
-PUBKEY = binascii.unhexlify('10223344556677889900aabbccddeeff11223344556677889900aabbccddee7f')
+PRIVKEY = binascii.unhexlify('60e1156398abfedd26f3c501e6c18fca05d317eeaef8b215a92575a61b9f1047')
+PUBKEY = binascii.unhexlify('2f046771a4a25efbb3645e71a0bb8be94fcac45109b1029cab34fcb648ed183f')
 
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -55,19 +56,22 @@ def list_beacons():
 def register_beacon(name):
     db = get_db()
 
+    # TODO: verify parameters from request
     beacon_pub = binascii.unhexlify(request.form.get('beacon_pub'))
-    k = request.form.get('k')
-    counter = request.form.get('counter')
+    k = int(request.form.get('k'))
+    counter = int(request.form.get('counter'))
     eid = binascii.unhexlify(request.form.get('eid'))
 
-    sec = eddystone_crypto.compute_shared_secret(beacon_pub, app.config['PRIVKEY'])
+    sec = eddystone_crypto.compute_shared_secret(app.config['PRIVKEY'], beacon_pub)
     ik = eddystone_crypto.compute_ik(sec, app.config['PUBKEY'], beacon_pub)
-    # TODO: verify parameters from request
-    # TODO: pass IK & params to _crypto and check first EID is correct
-    db.execute('insert into beacon (name, identity_key, clock_offset, k) values (?, ?, ?, ?)',
-               [name, 'abcd', 1234, 11])
-    db.commit()
-    return 'Registered beacon ' + name
+    computed_eid = eddystone_crypto.compute_eid(ik, k, counter)
+    if eid == computed_eid:
+        db.execute('insert into beacon (name, identity_key, clock_offset, k) values (?, ?, ?, ?)',
+                   [name, 'abcd', 1234, 11])
+        db.commit()
+        return 'Registered beacon ' + name
+    else:
+        return 'Error! {} != {}'.format(eid, computed_eid)
 
 @app.route('/eid/<eid>')
 def resolve_eid(eid):

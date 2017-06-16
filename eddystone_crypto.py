@@ -2,13 +2,14 @@ import binascii
 from Crypto.Cipher import AES
 import hashlib
 import hkdf
-import nacl
+import nacl.bindings
 
 def get_byte(num, i):
     return (num >> (24 - i*8)) & 0xFF
 
-def compute_shared_secret(pub, priv):
-    return nacl.bindings.crypto_scalarmult(pub, priv)
+def compute_shared_secret(priv, pub):
+    secret = nacl.bindings.crypto_scalarmult(priv, pub)
+    return secret
 
 def compute_ik(shared_secret, service_public_key, beacon_public_key):
     salt = service_public_key + beacon_public_key
