@@ -2,7 +2,7 @@ from django.db import models
 
 class Beacon(models.Model):
     name = models.CharField(max_length=50)
-    key = models.BinaryField()
+    key = models.CharField(max_length=32)
     reg_time = models.DateTimeField()
     reg_counter = models.IntegerField()
     k = models.PositiveSmallIntegerField()
